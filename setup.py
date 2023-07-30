@@ -13,7 +13,7 @@ desc = "A simple set of scripts for handling and formatting HTML formatted text.
 
 setuptools.setup(
     name="HTML-String-Tools",
-    version="0.1.0",
+    version="0.2.0",
     author="Drakovek",
     author_email="DrakovekMail@gmail.com",
     description=desc,
