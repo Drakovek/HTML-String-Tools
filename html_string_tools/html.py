@@ -1,56 +1,8 @@
-#!/usr/bin/env
+#!/usr/bin/env python3
 
-from html import unescape
-from re import findall as re_find
-from re import sub as re_sub
-
-def regex_replace(funct, pattern:str, string:str) -> str:
-    """
-    Replaces text matching regex pattern with said matching text run though a given function.
-
-    :param funct: Function to run matching text through, required
-    :type funct: function, required
-    :param pattern: Regex pattern to search for in string
-    :type pattern: str, required
-    :param string: String to search for pattern within
-    :type string: str, required
-    :return: Given string with pattern matched text replaced
-    :rtype: str
-    """
-    try:
-        # Get all strings that match the regex pattern
-        matches = re_find(pattern, string)
-        # Run through all matches to replace text
-        new_text = ""
-        left_text = string
-        for match in matches:
-            # Keep all of the text begore the match
-            index = left_text.find(match)
-            new_text = new_text + left_text[:index]
-            # Add replacement for the match
-            new_text = new_text + funct(match)
-            # Set the remaining text for after the match
-            index += len(match)
-            left_text = left_text[index:]
-        # Keep all the text left in the initial string
-        new_text = new_text + left_text
-        # Return the string with matching patterns replaced
-        return new_text
-    except TypeError: return string
-
-def remove_whitespace(string:str) -> str:
-    """
-    Removes whitespace from the beggining and end of a given string.
-
-    :param string: Given string to remove whitespace from
-    :type string: str, required
-    :return: String with the whitespace removed
-    :rtype: str
-    """
-    try:
-        # Remove leading and ending whitespace
-        return re_sub("^\\s+|\\s+$", "", string)
-    except TypeError: return string
+import re
+import html
+from . import regex
 
 def get_extension(path:str) -> str:
     """
@@ -64,7 +16,7 @@ def get_extension(path:str) -> str:
     """
     try:
         # Find potential extensions
-        match = re_find("\\.[a-zA-Z0-9]{1,5}\\?|\\.[a-zA-Z0-9]{1,5}$", path)
+        match = re.findall("\\.[a-zA-Z0-9]{1,5}\\?|\\.[a-zA-Z0-9]{1,5}$", path)
         # Remove "?" from end of extension, if necessary
         extension = match[0]
         for item in match:
@@ -86,19 +38,8 @@ def entity_to_character(entity:str) -> str:
     """
     try:
         # Check that the given string is an HTML entity
-        return unescape(re_find("^&[^&;]+;$", entity)[0])
+        return html.unescape(re.findall("^&[^&;]+;$", entity)[0])
     except (IndexError, TypeError): return entity
-
-def replace_entities(string:str=None) -> str:
-    """
-    Replaces all HTML entities in a string with Unicode characters.
-
-    :param string: Given string
-    :type string: str, required
-    :return: String with HTML escape characters replaced
-    :rtype: str
-    """
-    return regex_replace(entity_to_character, "&[^&;]+;", string)
 
 def character_to_entity(character:str) -> str:
     """
@@ -114,6 +55,17 @@ def character_to_entity(character:str) -> str:
         return "&#" + str(ord(character)) + ";"
     except TypeError: return ""
 
+def replace_entities(string:str=None) -> str:
+    """
+    Replaces all HTML entities in a string with Unicode characters.
+
+    :param string: Given string
+    :type string: str, required
+    :return: String with HTML escape characters replaced
+    :rtype: str
+    """
+    return regex.regex_replace(entity_to_character, "&[^&;]+;", string)
+
 def replace_reserved_characters(string:str, escape_non_ascii:bool=False) -> str:
     """
     Replaces all reserved HTML characters with escape entities.
@@ -126,10 +78,10 @@ def replace_reserved_characters(string:str, escape_non_ascii:bool=False) -> str:
     :return: String with reserved characters replaced
     :rtype: str
     """
-    regex = "[<>/='\"&;]"
-    if escape_non_ascii: regex = "[<>/='\"&;]|[^ -~]"
-    return regex_replace(character_to_entity, regex, string)
-
+    regex_string = "[<>/='\"&;]"
+    if escape_non_ascii: regex_string = "[<>/='\"&;]|[^ -~]"
+    return regex.regex_replace(character_to_entity, regex_string, string)
+    
 def replace_reserved_in_html(html_string:str, escape_non_ascii:bool=False) -> str:
     """
     Replaces reserved HTML characters in text which already contains HTML syntax.
@@ -144,7 +96,7 @@ def replace_reserved_in_html(html_string:str, escape_non_ascii:bool=False) -> st
     """
     try:
         # Find all HTML element blocks
-        elements = re_find("<[^<>]+>", html_string)
+        elements = re.findall("<[^<>]+>", html_string)
         # Run through each HTML element
         left_text = html_string
         new_text = ""
