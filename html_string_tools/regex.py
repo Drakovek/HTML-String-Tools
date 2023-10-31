@@ -35,17 +35,3 @@ def regex_replace(funct, pattern:str, string:str) -> str:
         # Return the string with matching patterns replaced
         return new_text
     except TypeError: return string
-
-def remove_whitespace(string:str) -> str:
-    """
-    Removes whitespace from the beggining and end of a given string.
-
-    :param string: Given string to remove whitespace from
-    :type string: str, required
-    :return: String with the whitespace removed
-    :rtype: str
-    """
-    try:
-        # Remove leading and ending whitespace
-        return re.sub("^\\s+|\\s+$", "", string)
-    except TypeError: return string
