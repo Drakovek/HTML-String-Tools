@@ -117,3 +117,65 @@ def test_replace_reserved_in_html():
     # Test replacing characters with invalid text
     assert html.replace_reserved_in_html(None) == None
     assert html.replace_reserved_in_html("") == ""
+
+def test_make_human_readable():
+    """
+    Tests the make_human_readable function
+    """
+    # Test making html human readable
+    base = "<html><thing>Thing</thing><body>Other</body></html>"
+    formatted = html.make_human_readable(base)
+    compare = ""
+    compare = f"{compare}<html>\n"
+    compare = f"{compare}    <thing>Thing</thing>\n"
+    compare = f"{compare}    <body>Other</body>\n"
+    compare = f"{compare}</html>"
+    assert formatted == compare
+    base = "<html><head>Thing</head><body><div>Something</div><item blah=''/></body></html>"
+    formatted = html.make_human_readable(base)
+    compare = ""
+    compare = f"{compare}<html>\n"
+    compare = f"{compare}    <head>Thing</head>\n"
+    compare = f"{compare}    <body>\n"
+    compare = f"{compare}        <div>Something</div>\n"
+    compare = f"{compare}        <item blah=''/>\n"
+    compare = f"{compare}    </body>\n"
+    compare = f"{compare}</html>"
+    assert formatted == compare
+    # Test with paragraph tags
+    base = "<html url='/blah/'><head>Thing</head><body>"
+    base = f"{base}<p>Something <b>BIG</b></p>"
+    base = f"{base}<p class='thing'><a href=''>Link</a> Thing.</p>"
+    base = f"{base}<p><i>internal</i><b>Thing</b></p>"
+    base = f"{base}</body></html>"
+    formatted = html.make_human_readable(base, "   ")
+    compare = ""
+    compare = f"{compare}<html url='/blah/'>\n"
+    compare = f"{compare}   <head>Thing</head>\n"
+    compare = f"{compare}   <body>\n"
+    compare = f"{compare}      <p>Something <b>BIG</b></p>\n"
+    compare = f"{compare}      <p class='thing'><a href=''>Link</a> Thing.</p>\n"
+    compare = f"{compare}      <p><i>internal</i><b>Thing</b></p>\n"
+    compare = f"{compare}   </body>\n"
+    compare = f"{compare}</html>"
+    assert formatted == compare
+    # Test with existing spaces & newline characters
+    base = "<html>\n\n  <head> AAA </head>\n \n<div>Thing  </div> </html>"
+    formatted = html.make_human_readable(base, " ")
+    compare = ""
+    compare = f"{compare}<html>\n"
+    compare = f"{compare} <head> AAA </head>\n"
+    compare = f"{compare} <div>Thing  </div>\n"
+    compare = f"{compare}</html>"
+    assert formatted == compare
+    # Test with improperly formatted html
+    base = "</all></back></ports>"
+    formatted = html.make_human_readable(base, "    ")
+    assert formatted == "</all>\n</back>\n</ports>"
+    base = "<html><head>Thing</head><p>Unfinished</html>"
+    formatted = html.make_human_readable(base)
+    compare = ""
+    compare = f"{compare}<html>\n"
+    compare = f"{compare}    <head>Thing</head>\n"
+    compare = f"{compare}    <p>Unfinished</html>"
+    assert formatted == compare

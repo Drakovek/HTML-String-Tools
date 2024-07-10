@@ -112,3 +112,40 @@ def replace_reserved_in_html(html_string:str, escape_non_ascii:bool=False) -> st
         new_text = new_text + replace_reserved_characters(replaced, escape_non_ascii)
         return new_text
     except TypeError: return html_string
+
+def make_human_readable(html:str, indent:str="    ") -> str:
+    """
+    Converts HTML text into a human-readable form, adding newlines and indents.
+
+    :param html: HTML text to format
+    :type html: str, required
+    :param indent: String to use as a single indent, defaults to "    "
+    :type indent: str, optional
+    :return: HTML in human-readable form
+    :rtype: str
+    """
+    # Move all Elements to new lines
+    formatted = re.sub(r"\n", "", html)
+    formatted = re.sub(r">\s*<", ">\n<", formatted)
+    reg_string = r"<p[^>]*>(?:[^<]*<(?!\/p)[^>]*>)*[^<]*<\/p>|<[^>]*>"
+    remove_lines = lambda p: p.replace("\n", "")
+    formatted = regex.regex_replace(remove_lines, reg_string, formatted)
+    formatted = formatted.split("\n")
+    # Indent the items
+    num = 0
+    for i in range(0, len(formatted)):
+        # Find the type of tag
+        start_tag = len(re.findall(r"^<(?!\/)", formatted[i])) > 0
+        end_tag = len(re.findall(r"<\s*\/[^>]+>$|<[^>]+\/\s*>$", formatted[i])) > 0
+        # Add the correct number of indents
+        if end_tag and not start_tag:
+            num -= 1
+        cur_indent = indent*num
+        if start_tag:
+            num += 1
+            if end_tag:
+                num -= 1
+        # Formate the line
+        formatted[i] = f"{cur_indent}{formatted[i]}\n"
+    # Return the formatted XML string
+    return "".join(formatted).strip()
