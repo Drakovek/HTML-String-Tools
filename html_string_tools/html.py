@@ -2,7 +2,6 @@
 
 import re
 import html
-from . import regex
 
 def get_extension(path:str) -> str:
     """
@@ -64,7 +63,10 @@ def replace_entities(string:str=None) -> str:
     :return: String with HTML escape characters replaced
     :rtype: str
     """
-    return regex.regex_replace(entity_to_character, "&[^&;]+;", string)
+    try:
+        replace = lambda e: entity_to_character((e.group(0)))
+        return re.sub(r"&[^&;]+;", replace, string)
+    except TypeError: return None
 
 def replace_reserved_characters(string:str, escape_non_ascii:bool=False) -> str:
     """
@@ -78,9 +80,12 @@ def replace_reserved_characters(string:str, escape_non_ascii:bool=False) -> str:
     :return: String with reserved characters replaced
     :rtype: str
     """
-    regex_string = "[<>/='\"&;]"
-    if escape_non_ascii: regex_string = "[<>/='\"&;]|[^ -~]"
-    return regex.regex_replace(character_to_entity, regex_string, string)
+    try:
+        regex_string = "[<>/='\"&;]"
+        if escape_non_ascii: regex_string = "[<>/='\"&;]|[^ -~]"
+        replace = lambda c: character_to_entity((c.group(0)))
+        return re.sub(regex_string, replace, string)
+    except TypeError: return None
     
 def replace_reserved_in_html(html_string:str, escape_non_ascii:bool=False) -> str:
     """
@@ -128,8 +133,8 @@ def make_human_readable(html:str, indent:str="    ") -> str:
     formatted = re.sub(r"\n", "", html)
     formatted = re.sub(r">\s*<", ">\n<", formatted)
     reg_string = r"<p[^>]*>(?:[^<]*<(?!\/p)[^>]*>)*[^<]*<\/p>|<[^>]*>"
-    remove_lines = lambda p: p.replace("\n", "")
-    formatted = regex.regex_replace(remove_lines, reg_string, formatted)
+    remove_lines = lambda p: str(p.group(0)).replace("\n", "")
+    formatted = re.sub(reg_string, remove_lines, formatted)
     formatted = formatted.split("\n")
     # Indent the items
     num = 0
