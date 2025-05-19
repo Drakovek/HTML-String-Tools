@@ -130,9 +130,6 @@ def test_make_human_readable():
     compare = f"{compare}    <thing>Thing</thing>\n"
     compare = f"{compare}    <body>Other</body>\n"
     compare = f"{compare}</html>"
-
-    print(formatted)
-
     assert formatted == compare
     base = "<html><head>Thing</head><body><div>Something</div><item blah=''/></body></html>"
     formatted = html_st.make_human_readable(base)
