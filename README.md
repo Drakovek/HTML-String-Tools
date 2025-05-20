@@ -111,6 +111,28 @@ Converts string with HTML formatting into simple plain text. HTML tags are remov
 
 There is also a `keep_tags` bool parameter that defaults to False. When True, most HTML elements are removed as normal, but images, links, and basic formatting like italic and bold tags remain intact. This is intended to drastically simplify HTML, and can be used in conjunction with `text_to_paragraphs` to create HTML suited for reader mode.
 
+## add_smart_quotes_to_element
+
+Attempts to add smart quotes (separate left and right style for single and double quotes) to the text in an HTML element. All quotes used for HTML syntax are left as standard straight quotes.
+
+    import html_string_tools
+
+    string = "<div id='id'>This is a 'quote'</div>"
+    string = html_string_tools.add_smart_quotes_to_element(string)
+    # string will be "<div id='id'>This is a ‘quote’</div>"
+
+It's recommended you don't use this function if you're trying to format an entire HTML document, as it will attempt to close quote links between separate elements. For formatting documents, the `add_smart_quotes_to_paragraphs` function is recommended.
+
+## add_smart_quotes_to_paragraphs
+
+Attempts to add smart quotes (separate left and right style for single and double quotes) to all the paragraph tags (\<p\>) in an HTML document. Unlike `add_smart_quotes_to_element`, different paragraph blocks will be treated separately, so the direction of quotes will not carry over between elements. All text outside of paragraph tags will not be affected.
+
+    import html_string_tools
+
+    string = "<div>'Not Altered'</div><p>'One quote</p><p>'Two quotes'</p>"
+    string = html_string_tools.add_smart_quotes_to_paragraphs(string)
+    # string will be "<div>'Not Altered'</div><p>‘One quote</p><p>‘Two quotes’</p>"
+
 # CLI
 
 There are two command line scripts for converting between text files and HTML files.

@@ -17,7 +17,7 @@ desc = "A simple set of scripts for handling, formatting, and converting HTML fo
 
 setuptools.setup(
     name="HTML-String-Tools",
-    version="0.4.0",
+    version="0.4.1",
     author="Drakovek",
     author_email="DrakovekMail@gmail.com",
     description=desc,

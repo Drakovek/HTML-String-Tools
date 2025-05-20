@@ -83,6 +83,9 @@ def test_html_to_text():
     html = "<img src='link' /><b>Bold</b> Thing <span>Other.</span>"
     converted = convert.html_to_text(html, True)
     assert converted == "<img src='link' /><b>Bold</b> Thing Other."
+    html = "<h2>Title</h2><pre>AAA</pre> <u>Underlined</u>"
+    converted = convert.html_to_text(html, True)
+    assert converted == "<h2>Title</h2>AAA <u>Underlined</u>"
     # Test removing all html tags when specified
     html = "<span id='aaa'>Word.</span> <a href='thing'><i>Link</i></a><svg thing='aaa'/>"
     converted = convert.html_to_text(html, False)
@@ -98,3 +101,53 @@ def test_html_to_text():
     html = "<span>&lt;3 &amp; Thing.</span>"
     converted = convert.html_to_text(html, False)
     assert converted == "<3 & Thing."
+
+def test_add_smart_quotes_to_element():
+    """
+    Test the add_smart_quotes_to_element function.
+    """
+    # Test adding smart double quotes
+    text = "This is a <i id=\"aaa\">\"quote!\"</i> After."
+    converted = convert.add_smart_quotes_to_element(text)
+    assert converted == "This is a <i id=\"aaa\">“quote!”</i> After."
+    text = "<b id=“b“>One “Quote\"</b><i id=“i“>\"Second quote″</i>"
+    converted = convert.add_smart_quotes_to_element(text)
+    assert converted == "<b id=\"b\">One “Quote”</b><i id=\"i\">“Second quote”</i>"
+    # Test adding smart single quotes
+    text = "<a id='a'>'Single quote!'</a>"
+    converted = convert.add_smart_quotes_to_element(text)
+    assert converted == "<a id='a'>‘Single quote!’</a>"
+    text = "<b id=’b’>’quote' one</b><i id=’i’>Another ’quote＇</i>"
+    converted = convert.add_smart_quotes_to_element(text)
+    assert converted == "<b id='b'>‘quote’ one</b><i id='i'>Another ‘quote’</i>"
+    # Test adding smart apostrophes, with and without smart single quotes
+    text = "'Isn't a quote' 'Keep 'em out!'"
+    converted = convert.add_smart_quotes_to_element(text)
+    assert converted == "‘Isn’t a quote’ ‘Keep ’em out!’"
+    text = "I'm dreamin' 'BOUT 'em"
+    converted = convert.add_smart_quotes_to_element(text)
+    assert converted == "I’m dreamin’ ’BOUT ’em"
+    text = "Ol' Rock 'n' Roll"
+    converted = convert.add_smart_quotes_to_element(text)
+    assert converted == "Ol’ Rock ’n’ Roll"
+    # Test adding smart double and single quotes in same text
+    text = "\"I'm 'inside' another quote!\""
+    converted = convert.add_smart_quotes_to_element(text)
+    assert converted == "“I’m ‘inside’ another quote!”"
+
+def test_add_smart_quotes_to_paragraphs():
+    """
+    Tests the add_smart_quotes_to_paragraphs function.
+    """
+    # Test that quotes outside of paragraph tags are not affected
+    text = "<div>'Outside'</div><p>'Inside'</p>\"Outside\"<p id='a'>\"Inside\"</p>"
+    converted = convert.add_smart_quotes_to_paragraphs(text)
+    assert converted == "<div>'Outside'</div><p>‘Inside’</p>\"Outside\"<p id='a'>“Inside”</p>"
+    # Test if there are no paragraphs
+    text = "\"This is fine.\""
+    converted = convert.add_smart_quotes_to_paragraphs(text)
+    assert converted == "\"This is fine.\""
+    # Test that smart quotes aren't carried over between paragraphs
+    text = "<p>\"Long with no end quote</p> <p>\"New paragraph\"</p>"
+    converted = convert.add_smart_quotes_to_paragraphs(text)
+    assert converted == "<p>“Long with no end quote</p> <p>“New paragraph”</p>"

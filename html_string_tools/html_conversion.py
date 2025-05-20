@@ -22,9 +22,9 @@ def text_to_paragraphs(text:str, contains_html:bool=False) -> str:
     formatted_text = text.replace("\t", "    ")
     # Separate sections of text into paragraphs
     # Paragraphs are detected as being multiple newlines, a newline with a quote, or a newline with a tab
-    regex = r"\n\s{3,}|(?:\n\s*){2,}|\n\s*(?=[\"ʺ“”＂])|(?<=[\"ʺ“”＂])\s*\n"
-    formatted_text = re.sub(regex, "{{{PPP}}}", formatted_text)
-    paragraphs = formatted_text.split("{{{PPP}}}")
+    regex = r"\n\s{3,}|(?:\n\s*){2,}|\n\s*(?=[\"“”″＂])|(?<=[\"“”″＂])\s*\n"
+    formatted_text = re.sub(regex, "{[{PPP}]}", formatted_text)
+    paragraphs = formatted_text.split("{[{PPP}]}")
     # Format the text for each individual paragraph
     formatted_text = ""
     for paragraph in paragraphs:
@@ -75,9 +75,12 @@ def html_to_text(html:str, keep_tags:bool=False) -> str:
     text = re.sub(r"\s*<div>\s*|\s*<div\s+[^<>]*>\s*|\s*<\/div>\s*", "\n\n", text)
     # Remove unnecessary tags
     if keep_tags:
-        # Remove all except <i>, <b>, <a>, <hr>, and <img> tags
-        text = re.sub(r"<(?!\/|img[\/\s>]|a[\/\s>]|i[\/\s>]|b[\/\s>]|hr[\/\s>])[^<>]*>", "", text)
-        text = re.sub(r"<\/(?!a>|b>|i>|img>|hr>)[^<>]*>", "", text)
+        # Remove all except <i>, <b>, <u>, <a>, <hr>, and <img> tags
+        regex = r"\/|a[\/\s>]|b[\/\s>]|i[\/\s>]|u[\/\s>]|hr[\/\s>]|img[\/\s>]|h[1-9][\/\s>]"
+        regex = f"<(?!{regex})[^<>]*>"
+        text = re.sub(regex, "", text)
+        regex = r"<\/(?!a>|b>|i>|u>|hr>|img>|h[1-9]>)[^<>]*>"
+        text = re.sub(regex, "", text)
     else:
         # Remove every remaining html tag
         text = re.sub(r"<[^<>]*>", "", text)
@@ -90,6 +93,79 @@ def html_to_text(html:str, keep_tags:bool=False) -> str:
         text = html_string_tools.replace_entities(text)
     # Return the modified text
     return text
+
+def add_smart_quotes_to_element(html_text) -> str:
+    """
+    Attempts to add smart left and right quotes and apostrophes to the text within a given HTML element.
+    Quotes that are a part of HTML syntax (as attributes in tags, etc) should not be altered.
+
+    :param html_text: HTML formatted text to add smart quotes to
+    :type html_text: str, required
+    :return: HTML text with new smart quotes
+    :rtype: str
+    """
+    # Replace all quotes with standard quotes
+    modified = re.sub("[“”″＂]", "\"", html_text)
+    modified = re.sub("[ʼˈ٬‘’′＇]", "'", modified)
+    # Replace all quotes inside HTML tags with placeholders
+    tags = re.findall("<[^<>]+>", modified)
+    remaining_text = modified
+    modified = ""
+    for tag in tags:
+        # Replace the quotes in the tag
+        replaced = tag.replace("\"", "{[{double}]}")
+        replaced = replaced.replace("'", "{[{single}]}")
+        # Add the modified string
+        index = remaining_text.find(tag)
+        modified = modified + remaining_text[:index]
+        modified = f"{modified}{replaced}"
+        # Update the remaining text
+        remaining_text = remaining_text[index + len(tag):]
+    modified = f"{modified}{remaining_text}"
+    # Replace apostrophes
+    regex = r"(?<=[a-z])'(?=[a-z])|(?<=[a-z]in)'(?=(?:[^a-z0-9]|$))"
+    apostrophe_start = "bout|cause|cept|em|gainst|n|neath|round|til|tis|twas|tween|twere"
+    regex = f"{regex}|(?<=[^a-z0-9])'(?=(?:{apostrophe_start})(?:[^a-z0-9]|$))"
+    regex = f"{regex}|^'(?=(?:{apostrophe_start})(?:[^a-z0-9]|$))"
+    regex = f"{regex}|(?<=[^a-z0-9]ol)'(?=(?:[^a-z0-9]|$))|(?<=^ol)'(?=(?:[^a-z0-9]|$))"
+    regex = f"{regex}|(?<=[^a-z0-9]n)'(?=(?:[^a-z0-9]|$))|(?<=^n)'(?=(?:[^a-z0-9]|$))"
+    modified = re.sub(regex, "&rsquo;", modified, flags=re.IGNORECASE)
+    # Replace double quotes
+    left = True
+    regex = "\""
+    while(len(re.findall(regex, modified)) > 0):
+        quote = "&rdquo;"
+        if left: quote = "&ldquo;"
+        modified = re.sub(regex, quote, modified, count=1)
+        left = not left
+    # Replace single quotes
+    left = True
+    regex = "'"
+    while(len(re.findall(regex, modified)) > 0):
+        quote = "&rsquo;"
+        if left: quote = "&lsquo;"
+        modified = re.sub(regex, quote, modified, count=1)
+        left = not left
+    # Add back the subbed quotes inside HTML tags
+    modified = modified.replace("{[{double}]}", "\"")
+    modified = modified.replace("{[{single}]}", "'")
+    # Add escapes
+    modified = html_string_tools.replace_reserved_in_html(modified, False)
+    # Return the modified text
+    return modified
+
+def add_smart_quotes_to_paragraphs(html_text) -> str:
+    """
+    Adds smart quotes to the text within HTML paragraph tags, ignoring all other text.
+
+    :param html_text: HTML formatted text to add smart quotes to
+    :type html_text: str, required
+    :return: HTML text with new smart quotes in paragraphs
+    :rtype: str
+    """
+    regex = r"<p(?:\s[^>]*)?>(?:[^<]*<(?!\/p>)[^>]*>)*[^<]*<\/p>"
+    add_quotes = lambda match: add_smart_quotes_to_element(match.group(0))
+    return re.sub(regex, add_quotes, html_text)
 
 def user_txt_to_html():
     """
@@ -109,9 +185,9 @@ def user_txt_to_html():
             type=str,
             default=None)
     parser.add_argument(
-            "-c",
-            "--contains-html",
-            help="Whether the text file contains some HTML formatting tags.",
+            "-t",
+            "--tags",
+            help="Treats the text like it contains HTML tags",
             action="store_true")
     args = parser.parse_args()
     # Check if the user added an input or output file
@@ -144,7 +220,7 @@ def user_txt_to_html():
                 print("\033[31mInvalid Input File.\033[0m")
             else:
                 # Write converted text to text file
-                html_text = text_to_paragraphs(file_text, args.contains_html)
+                html_text = text_to_paragraphs(file_text, args.tags)
                 html_text = f"<!DOCTYPE html><html><body>{html_text}</body></html>"
                 with open(output_file, "w", encoding="UTF-8") as out:
                     out.write(html_text)
@@ -167,9 +243,9 @@ def user_html_to_txt():
             type=str,
             default=None)
     parser.add_argument(
-            "-k",
-            "--keep-tags",
-            help="Whether to keep basic HTML tags in the exported text",
+            "-t",
+            "--tags",
+            help="Keeps basic HTML tags in the exported text",
             action="store_true")
     args = parser.parse_args()
     # Check if the user added an input or output file
@@ -202,6 +278,6 @@ def user_html_to_txt():
                 print("\033[31mInvalid Input File.\033[0m")
             else:
                 # Write converted text to text file
-                text = html_to_text(html_text, args.keep_tags)
+                text = html_to_text(html_text, args.tags)
                 with open(output_file, "w", encoding="UTF-8") as out:
                     out.write(text)
