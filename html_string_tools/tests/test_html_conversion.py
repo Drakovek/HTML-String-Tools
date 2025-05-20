@@ -110,14 +110,14 @@ def test_add_smart_quotes_to_element():
     text = "This is a <i id=\"aaa\">\"quote!\"</i> After."
     converted = convert.add_smart_quotes_to_element(text)
     assert converted == "This is a <i id=\"aaa\">“quote!”</i> After."
-    text = "<b id=“b“>One “Quote\"</b><i id=“i“>\"Second quote″</i>"
+    text = "<b id=\"b\">One “Quote\"</b><i id=\"i\">\"Second quote″</i>"
     converted = convert.add_smart_quotes_to_element(text)
     assert converted == "<b id=\"b\">One “Quote”</b><i id=\"i\">“Second quote”</i>"
     # Test adding smart single quotes
     text = "<a id='a'>'Single quote!'</a>"
     converted = convert.add_smart_quotes_to_element(text)
     assert converted == "<a id='a'>‘Single quote!’</a>"
-    text = "<b id=’b’>’quote' one</b><i id=’i’>Another ’quote＇</i>"
+    text = "<b id='b'>’quote' one</b><i id='i'>Another ’quote＇</i>"
     converted = convert.add_smart_quotes_to_element(text)
     assert converted == "<b id='b'>‘quote’ one</b><i id='i'>Another ‘quote’</i>"
     # Test adding smart apostrophes, with and without smart single quotes

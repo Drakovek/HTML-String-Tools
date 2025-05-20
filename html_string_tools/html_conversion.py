@@ -104,35 +104,22 @@ def add_smart_quotes_to_element(html_text) -> str:
     :return: HTML text with new smart quotes
     :rtype: str
     """
+    # Replace escape characters
+    modified = html_string_tools.replace_reserved_in_html(html_text, False)
     # Replace all quotes with standard quotes
-    modified = re.sub("[“”″＂]", "\"", html_text)
-    modified = re.sub("[ʼˈ٬‘’′＇]", "'", modified)
-    # Replace all quotes inside HTML tags with placeholders
-    tags = re.findall("<[^<>]+>", modified)
-    remaining_text = modified
-    modified = ""
-    for tag in tags:
-        # Replace the quotes in the tag
-        replaced = tag.replace("\"", "{[{double}]}")
-        replaced = replaced.replace("'", "{[{single}]}")
-        # Add the modified string
-        index = remaining_text.find(tag)
-        modified = modified + remaining_text[:index]
-        modified = f"{modified}{replaced}"
-        # Update the remaining text
-        remaining_text = remaining_text[index + len(tag):]
-    modified = f"{modified}{remaining_text}"
+    modified = re.sub("[“”″＂]", "&#34;", modified)
+    modified = re.sub("[ʼˈ٬‘’′＇]", "&#39;", modified)
     # Replace apostrophes
-    regex = r"(?<=[a-z])'(?=[a-z])|(?<=[a-z]in)'(?=(?:[^a-z0-9]|$))"
+    regex = r"(?<=[a-z])&#39;(?=[a-z])|(?<=[a-z]in)&#39;(?=(?:[^a-z0-9]|$))"
     apostrophe_start = "bout|cause|cept|em|gainst|n|neath|round|til|tis|twas|tween|twere"
-    regex = f"{regex}|(?<=[^a-z0-9])'(?=(?:{apostrophe_start})(?:[^a-z0-9]|$))"
-    regex = f"{regex}|^'(?=(?:{apostrophe_start})(?:[^a-z0-9]|$))"
-    regex = f"{regex}|(?<=[^a-z0-9]ol)'(?=(?:[^a-z0-9]|$))|(?<=^ol)'(?=(?:[^a-z0-9]|$))"
-    regex = f"{regex}|(?<=[^a-z0-9]n)'(?=(?:[^a-z0-9]|$))|(?<=^n)'(?=(?:[^a-z0-9]|$))"
+    regex = f"{regex}|(?<=[^a-z0-9])&#39;(?=(?:{apostrophe_start})(?:[^a-z0-9]|$))"
+    regex = f"{regex}|^&#39;(?=(?:{apostrophe_start})(?:[^a-z0-9]|$))"
+    regex = f"{regex}|(?<=[^a-z0-9]ol)&#39;(?=(?:[^a-z0-9]|$))|(?<=^ol)&#39;(?=(?:[^a-z0-9]|$))"
+    regex = f"{regex}|(?<=[^a-z0-9]n)&#39;(?=(?:[^a-z0-9]|$))|(?<=^n)&#39;(?=(?:[^a-z0-9]|$))"
     modified = re.sub(regex, "&rsquo;", modified, flags=re.IGNORECASE)
     # Replace double quotes
     left = True
-    regex = "\""
+    regex = "&#34;"
     while(len(re.findall(regex, modified)) > 0):
         quote = "&rdquo;"
         if left: quote = "&ldquo;"
@@ -140,16 +127,13 @@ def add_smart_quotes_to_element(html_text) -> str:
         left = not left
     # Replace single quotes
     left = True
-    regex = "'"
+    regex = "&#39;"
     while(len(re.findall(regex, modified)) > 0):
         quote = "&rsquo;"
         if left: quote = "&lsquo;"
         modified = re.sub(regex, quote, modified, count=1)
         left = not left
-    # Add back the subbed quotes inside HTML tags
-    modified = modified.replace("{[{double}]}", "\"")
-    modified = modified.replace("{[{single}]}", "'")
-    # Add escapes
+    # Add HTML escapes
     modified = html_string_tools.replace_reserved_in_html(modified, False)
     # Return the modified text
     return modified
